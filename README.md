@@ -1,7 +1,7 @@
 # Flask Leaflet GIS App
 An interactive web map that displays U.S. state data from a PostGIS database using Flask and Leaflet.
 
-## 📽 Demo
+## Demo
 
 ![App Demo](screenshots/demo.gif)
 
