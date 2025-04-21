@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style> #map {height: 600px; width: 100%;} </style>
+</head>
+<body>
+    <h2>States Map</h2>
+    <input type="text" id="stateInput" placeholder="Enter state name or abbreviation">
+    <button id="searchButton">Search</button>
+    <select id="dropdown"></select>
+    <div id="map"></div>
+
+    <script>
+        // Create a Map Centered at [39, -98] (Central USA) with Zoom Level 4
+        var map = L.map('map').setView([37.8, -96], 4); // Centered at USA
+
+        // Add OpenStreetMap Tiles (Base Map Layer)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        //Function to generate random colors for each state
+        function getColor(stateName) {
+            const colors = [
+                 "#ff9999", "#ffcc99", "#ffff99", "#ccff99", "#99ff99",
+                "#99ffcc", "#99ffff", "#99ccff", "#9999ff", "#cc99ff"
+            ];
+            let index = Math.abs(stateName.charCodeAt(0) % colors.length);
+            return colors[index];
+        }
+
+        // Function to add GeoJSON layer
+        function addGeoJSONLayer(data) {
+            L.geoJSON(data, {
+                style: function(feature) {
+                    return {
+                        color: "black",
+                        weight: 1,
+                        fillColor: getColor(feature.properties.name || "default"),
+                        fillOpacity: 0.5
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    if (feature.properties && feature.properties.name) {
+                        let p = feature.properties;
+
+                        let popupContent = `
+                            <strong>State:</strong> ${p.name}<br>
+                            <strong>Abbreviation:</strong> ${p.stusps}<br>
+                            <strong>Region:</strong> ${p.region}<br>
+                            <strong>Division:</strong> ${p.division}<br>
+                            <strong>2024 Population:</strong> ${p.pop_2024?.toLocaleString() || 'N/A'}<br>
+                            <strong>Net Change (2024):</strong> ${p.net_2024?.toLocaleString() || 'N/A'}<br>
+                            <strong>Births (2024):</strong> ${p.birth_2024?.toLocaleString() || 'N/A'}<br>
+                            <strong>Deaths (2024):</strong> ${p.deaths_2024?.toLocaleString() || 'N/A'}<br>
+                            <strong>Domestic Migration (2024):</strong> ${p.dom_mig_2024?.toLocaleString() || 'N/A'}
+                        `;
+                        layer.bindPopup(popupContent);
+                    } else {
+                        console.warn("Feature missing 'name' property:", feature);
+                    }
+                }
+            }).addTo(map);
+        }
+
+        // Function to fetch and process data
+        function fetchAndProcessData(url) {
+            fetch(url)
+                .then(response => {
+                    console.log(response);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log(data);
+                    // Parse the JSON string into an object since it comes as a string from the server
+                    if (typeof data === 'string') {
+                        data = JSON.parse(data);
+                    }
+                    
+                    if (!data || !data.features || !Array.isArray(data.features)) {
+                        throw new Error("Invalid GeoJSON format received");
+                    }
+
+                    // Clear existing layers
+                    map.eachLayer(layer => {
+                        if (!(layer instanceof L.TileLayer)) {
+                            map.removeLayer(layer);
+                        }
+                    });
+
+                    addGeoJSONLayer(data);
+                })
+                .catch(error => console.error("Error fetching or processing data:", error));
+        }
+
+        function fetchDropdownData() {
+            fetch("http://127.0.0.1:5000/dropdown")
+                .then(response => response.json())
+                .then(data => {
+                    addDropdownOptions(data);
+                });
+        }
+
+        function addDropdownOptions(data) {
+            const dropdown = document.getElementById('dropdown');
+            data.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                dropdown.appendChild(option);
+            });
+        }
+
+
+        // Add event listener to the search button
+        const searchButton = document.getElementById('searchButton');
+        searchButton.addEventListener('click', function() {
+            const stateName = document.getElementById('stateInput').value;
+            if (stateName) {
+                fetchAndProcessData(`http://127.0.0.1:5000/state/${stateName}`);
+            }
+        });
+        document.querySelector('#stateInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                searchButton.click();
+            }
+        });
+
+        // Add event listener to the dropdown
+        const dropdown = document.getElementById('dropdown');
+        dropdown.addEventListener('change', function() {
+            const selectedState = dropdown.value;
+            fetchAndProcessData(`http://127.0.0.1:5000/state/${selectedState}`);
+        });
+
+        // Initial load of dropdown options
+        fetchDropdownData("http://127.0.0.1:5000/dropdown");
+        // states.forEach(state => {
+        //     const option = document.createElement('option');
+        //     option.value = state;
+        //     option.textContent = state;
+        //     dropdown.appendChild(option);
+        // });
+
+
+    </script>
+</body>
+</html>
