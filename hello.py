@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify
 import geopandas as gpd
 import pandas as pd
 from sqlalchemy import create_engine, text
@@ -36,6 +36,16 @@ def get_state(state_name):
                 params={"state_name": state_name, "state_abbr": state_abbr},
                 geom_col="geom"
             )
+
+        # Load population data
+        pop_df = pd.read_csv("state_population.csv")
+
+        # Normalize casing for state names
+        pop_df['name'] = pop_df['name'].str.strip().str.lower()
+        df["name"] = df["name"].str.strip().str.lower()
+
+        # Merge population info into spatial geodataframe
+        df = df.merge(pop_df, on="name", how="left")
 
         # Print the dataframe
         print(f"Query results for {state_name}:")
