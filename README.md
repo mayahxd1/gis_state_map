@@ -1,17 +1,34 @@
 # Flask Leaflet GIS App
 An interactive web map that displays U.S. state data from a PostGIS database using Flask and Leaflet.
 
+## 📽 Demo
+
+![App Demo](screenshots/demo.gif)
+
+
 This app allows users to interactively explore U.S. states on a map. 
 You can search for a state by name or abbreviation, and the app will display its geographic boundary and details like region and division. 
 Data is served from a PostGIS database and displayed using Leaflet.js on the front end.
 
 ## Features
 
-- Flask API with endpoints for state GeoJSON data and a dropdown list
-- GeoPandas integration to fetch spatial data from PostGIS
-- Leaflet frontend map with popup info per state
-- Search bar and dropdown selector
-- Randomized color fill for each state
+- Interactive Leaflet map of all 50 U.S. states
+- Search bar and dropdown to query states by name or abbreviation
+- Side-by-side comparison tool for two states (2020–2024 population, births, deaths, migration)
+- Chart.js bar charts: population & key metrics side-by-side
+- CSV-enhanced backend with demographic data joined to spatial queries
+- Randomized color fill for selected state
+- Flask API serving GeoJSON data with CORS support
+- Data from PostGIS + U.S. Census population estimates (2020–2024)
+
+##Tech Stack
+
+- Python + Flask
+- PostGIS + SQLAlchemy
+- GeoPandas
+- Leaflet.js
+- Chart.js
+- HTML + CSS 
 
 ## Getting Started
 
@@ -43,6 +60,7 @@ If someone wants to use backend:
 
 - `GET /state/<state_name>` – Fetch GeoJSON for a given state.
 - `GET /dropdown` – List of all U.S. states.
+- `GET /compare` - Compare two states by query string. 
 ***
 
 ## Future Plans
@@ -51,3 +69,10 @@ If someone wants to use backend:
 - Add time-series comparison for population trends
 - Improve error handling and input validation
 - Deploy the app to Heroku or Render
+
+
+Data Sources
+
+    U.S. Census Bureau: State shapefile
+
+    Population estimates CSV from NST-EST2024-ALLDATA
