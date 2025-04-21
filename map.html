@@ -15,6 +15,15 @@
     <select id="dropdown"></select>
     <div id="map"></div>
 
+    <br>
+    <h3>Compare Two States</h3>
+    <select id="compareState1"></select>
+    <select id="compareState2"></select>
+    <button id="compareButton">Compare</button>
+
+    <div id="comparisonResult" style="margin-top: 1em; padding: 1em; border: 1px solid #ccc;"></div>
+
+
     <script>
         // Create a Map Centered at [39, -98] (Central USA) with Zoom Level 4
         var map = L.map('map').setView([37.8, -96], 4); // Centered at USA
@@ -101,6 +110,7 @@
                 .catch(error => console.error("Error fetching or processing data:", error));
         }
 
+        // Function to fetch dropdown data
         function fetchDropdownData() {
             fetch("http://127.0.0.1:5000/dropdown")
                 .then(response => response.json())
@@ -109,16 +119,35 @@
                 });
         }
 
+        // Add event listener to Compare Button
+        document.getElementById('compareButton').addEventListener('click', () => {
+            const s1 = document.getElementById('compareState1').value;
+            const s2 = document.getElementById('compareState2').value;
+            if (s1 && s2 && s1 !== s2) {
+                fetchCompareData(s1, s2);
+            } else {
+                alert("Please select two different states to compare.");
+            }
+        });
+
+        // Function to add options to the dropdown
         function addDropdownOptions(data) {
             const dropdown = document.getElementById('dropdown');
+            const compare1 = document.getElementById('compareState1');
+            const compare2 = document.getElementById('compareState2');
+
+
             data.forEach(state => {
-                const option = document.createElement('option');
-                option.value = state;
-                option.textContent = state;
-                dropdown.appendChild(option);
+                const opt1 = new Option(state, state);
+                const opt2 = new Option(state, state);
+                const opt3 = new Option(state, state);
+
+                dropdown.appendChild(opt1);
+                compare1.appendChild(opt2);
+                compare2.appendChild(opt3);
+
             });
         }
-
 
         // Add event listener to the search button
         const searchButton = document.getElementById('searchButton');
@@ -141,15 +170,41 @@
             fetchAndProcessData(`http://127.0.0.1:5000/state/${selectedState}`);
         });
 
-        // Initial load of dropdown options
-        fetchDropdownData("http://127.0.0.1:5000/dropdown");
-        // states.forEach(state => {
-        //     const option = document.createElement('option');
-        //     option.value = state;
-        //     option.textContent = state;
-        //     dropdown.appendChild(option);
-        // });
+        // Function to fetch and populate comparison dropdowns
+        function fetchCompareData(state1, state2) {
+            const url = `http://127.0.0.1:5000/compare?state1=${state1}&state2=${state2}`;
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (!Array.isArray(data) || data.length !== 2) {
+                        document.getElementById('comparisonResult').innerHTML = "Comparison failed or incomplete.";
+                        return;
+                    }
 
+                    const [s1, s2] = data;
+
+                    document.getElementById('comparisonResult').innerHTML = `
+                        <table>
+                            <thead>
+                                <tr><th>Metric</th><th>${s1.name}</th><th>${s2.name}</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Population (2024)</td><td>${s1.pop_2024?.toLocaleString() || "N/A"}</td><td>${s2.pop_2024?.toLocaleString() || "N/A"}</td></tr>
+                                <tr><td>Net Change (2024)</td><td>${s1.net_2024?.toLocaleString() || "N/A"}</td><td>${s2.net_2024?.toLocaleString() || "N/A"}</td></tr>
+                                <tr><td>Births (2024)</td><td>${s1.birth_2024?.toLocaleString() || "N/A"}</td><td>${s2.birth_2024?.toLocaleString() || "N/A"}</td></tr>
+                                <tr><td>Deaths (2024)</td><td>${s1.deaths_2024?.toLocaleString() || "N/A"}</td><td>${s2.deaths_2024?.toLocaleString() || "N/A"}</td></tr>
+                                <tr><td>Domestic Migration (2024)</td><td>${s1.dom_mig_2024?.toLocaleString() || "N/A"}</td><td>${s2.dom_mig_2024?.toLocaleString() || "N/A"}</td></tr>
+                            </tbody>
+                        </table>
+                    `;
+                })
+                .catch(error => {
+                    console.error("Error comparing states:", error);
+                    document.getElementById('comparisonResult').innerHTML = "Error loading comparison.";
+                });
+        }
+
+        fetchDropdownData();
 
     </script>
 </body>
