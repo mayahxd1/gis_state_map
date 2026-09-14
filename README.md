@@ -34,8 +34,8 @@ Data is served from a PostGIS database and displayed using Leaflet.js on the fro
 
 ### 1. Clone repository: 
 ```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
-cd YOUR_REPO_NAME
+git clone https://github.com/mayahxd1/gis_state_map.git
+cd gis_state_map
 
 ### 2. Set Up Environment: 
 python -m venv venv
